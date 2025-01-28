@@ -17,19 +17,20 @@ data['date'] = pd.to_datetime(data['date'])
 
 data.columns = ["date", "Subsidiary", "Oil losses (bopd)", "Wells WWO"]
 
+# Map colours
 custom_colors = {
     "BR": "#00d4cf", "CD": "#444343", "CG":  "#ff6351", "CM":  "#f1c232", "CO":  "#607d8b",
     "GA": "#9fdee8", "GT":  "#98e76a", "MX":  "#ec8a6e", "TD":  "#a76988", "TN":  "#1e53f7", 
     "TR": "#53a4b6", "TT":  "#00a19d", "UKS":  "#e4bbbb", "UKW":  "#047774", "VN":  "#fd3bff", 
     }
 
-# Declare some useful functions.
 '''
 # 🌍 Oil losses and Wells WWO.
 Browse Oil losses data from the PDE-PowerBi website. As you'll notice, the data only goes to 2023 right now, 
 and datapoints for certain years are often missing.
 '''
-''
+
+#Filtred the date
 min_value = data['date'].min().to_pydatetime()
 max_value = data['date'].max().to_pydatetime()
 
@@ -39,6 +40,7 @@ from_date, to_date = st.slider(
     max_value=max_value,
     value=[min_value, max_value])
 
+#Filtred the subsidiarys by date
 subsidiaries = data['Subsidiary'].unique()
 
 if not len(subsidiaries):
@@ -57,7 +59,6 @@ filtered_data = data[
 
 st.header('Oil losses over time', divider='gray')
 
-''
 filtered_data = data[
     (data['Subsidiary'].isin(selected_subsidiaries)) &
     (data['date'] >= from_date) &
@@ -68,8 +69,9 @@ filtered_data = data[
 daily_wells = filtered_data.groupby('date')['Wells WWO'].sum()  # Aggregate daily Wells WWO
 cumulative_wells = daily_wells.cumsum()
 
+# Make the plot
 fig = go.Figure()
-
+    # Area plot for Oil losses
 for subsidiary in selected_subsidiaries:
     subsidiary_data = filtered_data[filtered_data['Subsidiary'] == subsidiary]
     fig.add_trace(
@@ -93,7 +95,7 @@ fig.add_trace(
             line=dict(color="red", width=1),
             yaxis="y2",
         )
-)
+    )
 
 # Configure the layout
 fig.update_layout(
@@ -119,11 +121,10 @@ fig.update_layout(
 )
 fig.update_layout(hovermode="x unified", 
                   hoverlabel=dict(
-                bgcolor="white",
+                bgcolor="rgba(0, 0, 0, 0)",
                 font_size=10,
                 font_family="Times New Roman"
     ) )
 fig.update_layout(autosize=False, width=1200, height=600, margin=dict(l=20, r=20, b=20, t=20))
 
 st.plotly_chart(fig, use_container_width=True)
-
