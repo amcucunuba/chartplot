@@ -1,13 +1,8 @@
 import streamlit as st
-import math
 from pathlib import Path
-import numpy as np
 import pandas as pd
-import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output
 import plotly.graph_objects as go
-from data_loader import preprocess_data
+from data_loader import load_data, preprocess_data
 
 # Set the title and favicon that appear in the Browser's tab bar.
 st.set_page_config(
@@ -16,64 +11,88 @@ st.set_page_config(
 )
 # -----------------------------------------------------------------------------
 # Import the data
+data = load_data("./data/Losses and number of wells waiting for workover by subsidiary 16012024.csv")
 
-full_range, dates, subsidiaries, wells, losses = preprocess_data()
+data['date'] = pd.to_datetime(data['date'])
+
+data.columns = ["date", "Subsidiary", "Oil losses (bopd)", "Wells WWO"]
 
 custom_colors = {
-    "BR": "#00d4cf", "CD": "#444343", "CG":  "#ff6351", "CM":  "#9c27b0", "CO":  "#607d8b","GA": "#8bc34a", "GT":  "#f44336", "MX":  "#673ab7", "TD":  "#3f51b5", "TN":  "#2196f3", 
-    "TR": "#cddc39", "TT":  "#e91e63", "UKS":  "#4caf50", "UKW":  "#795548", "VN":  "#ffeb3b", 
-    "WELL WWO": "#9e9e9e"
+    "BR": "#00d4cf", "CD": "#444343", "CG":  "#ff6351", "CM":  "#f1c232", "CO":  "#607d8b",
+    "GA": "#9fdee8", "GT":  "#98e76a", "MX":  "#ec8a6e", "TD":  "#a76988", "TN":  "#1e53f7", 
+    "TR": "#53a4b6", "TT":  "#00a19d", "UKS":  "#e4bbbb", "UKW":  "#047774", "VN":  "#fd3bff", 
     }
 
 # Declare some useful functions.
-st.sidebar.header("Filtros")
-selected_dates = st.sidebar.slider(
-    "Seleccionar rango de fechas",
-    min_value=dates.min().to_pydatetime(),
-    max_value=dates.max().to_pydatetime(),
-    value=(dates.min().to_pydatetime(), dates.max().to_pydatetime()),
-    format="YYYY-MM-DD"
-)
+'''
+# 🌍 Oil losses and Wells WWO.
+Browse Oil losses data from the PDE-PowerBi website. As you'll notice, the data only goes to 2023 right now, 
+and datapoints for certain years are often missing.
+'''
+''
+min_value = data['date'].min().to_pydatetime()
+max_value = data['date'].max().to_pydatetime()
 
-selected_subsidiaries = st.sidebar.multiselect(
-    "Seleccionar subsidiarias",
+from_date, to_date = st.slider(
+    'Which years are you interested in?',
+    min_value=min_value,
+    max_value=max_value,
+    value=[min_value, max_value])
+
+subsidiaries = data['Subsidiary'].unique()
+
+if not len(subsidiaries):
+    st.warning("Select at least one country")
+
+selected_subsidiaries = st.multiselect(
+    'Which countries would you like to view?',
     options=subsidiaries,
-    default=subsidiaries
-)
+    default=subsidiaries)
 
-# Filter the data from select
-start_date, end_date = pd.to_datetime(selected_dates[0]), pd.to_datetime(selected_dates[1])
-filtered_dates = dates[(dates >= start_date) & (dates <= end_date)]
-filtered_losses = losses.loc[filtered_dates, selected_subsidiaries]
-filtered_wells = wells.loc[filtered_dates]
+filtered_data = data[
+    (data['Subsidiary'].isin(selected_subsidiaries))
+    & (data['date'] <= to_date)
+    & (from_date <= data['date'])
+]
+
+st.header('Oil losses over time', divider='gray')
+
+''
+filtered_data = data[
+    (data['Subsidiary'].isin(selected_subsidiaries)) &
+    (data['date'] >= from_date) &
+    (data['date'] <= to_date)
+]
+
+# Recompute Wells WWO dynamically
+daily_wells = filtered_data.groupby('date')['Wells WWO'].sum()  # Aggregate daily Wells WWO
+cumulative_wells = daily_wells.cumsum()
 
 fig = go.Figure()
 
-# Add area plot
-for subsidiary in subsidiaries:
+for subsidiary in selected_subsidiaries:
+    subsidiary_data = filtered_data[filtered_data['Subsidiary'] == subsidiary]
     fig.add_trace(
-        go.Scatter(
-            x=dates,
-            y=losses,
+    go.Scatter(
+            x=subsidiary_data['date'],
+            y=subsidiary_data['Oil losses (bopd)'],
             mode="lines",
-            #fill="tozeroy",
-            name=subsidiary,
+            name=f'{subsidiary}',
             line=dict(width=1, color=custom_colors.get(subsidiary, "#000000")),
             opacity=0.5,
             stackgroup='one',
         )
     )
-
-# Add line plot for Wells WWO
+    # Add line plot for Wells WWO
 fig.add_trace(
-    go.Scatter(
-        x=dates,
-        y=wells,
-        mode="lines",
-        name="Cumulative Wells",
-        line=dict(color="red", width=1),
-        yaxis="y2",
-    )
+        go.Scatter(
+            x=daily_wells.index,
+            y=daily_wells.values,
+            mode="lines",
+            name="Wells WWO",
+            line=dict(color="red", width=1),
+            yaxis="y2",
+        )
 )
 
 # Configure the layout
@@ -83,29 +102,28 @@ fig.update_layout(
     yaxis2=dict(title="Wells WWO", overlaying="y", side="right"),
     plot_bgcolor="white",
     legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.1,
-        xanchor="center",
-        x=0.5,
-    ),
-)
-
-# Update layout
-fig.update_layout(
-    xaxis=dict(title="Date"),
-    yaxis=dict(title="Oil losses (bopd)"),
-    yaxis2=dict(title="Wells WWO", overlaying="y", side="right"),
-    plot_bgcolor="white",
-    legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.1,
-        xanchor="center",
-        x=0.5,
-        ),
+        orientation="v",
+        yanchor="top",
+        y=1,
+        xanchor="left",
+        x=0,
+        entrywidth=5,
+        traceorder="reversed",
+        title_font_family="Times New Roman",
+        font=dict(
+            family="Times New Roman",
+            size=10,
+            color="black"
+         ), 
     )
-st.title("Oil Losses Dashboard")
-st.plotly_chart(fig, use_container_width=True)
+)
+fig.update_layout(hovermode="x unified", 
+                  hoverlabel=dict(
+                bgcolor="white",
+                font_size=10,
+                font_family="Times New Roman"
+    ) )
+fig.update_layout(autosize=False, width=1200, height=600, margin=dict(l=20, r=20, b=20, t=20))
 
+st.plotly_chart(fig, use_container_width=True)
 
