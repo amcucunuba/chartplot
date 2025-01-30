@@ -25,7 +25,7 @@ custom_colors = {
     }
 
 '''
-# 🌍 Oil losses and Wells WWO.
+# 🌍 Oil losses and Wells WWO
 Browse Oil losses data from the PDE-PowerBi website. As you'll notice, the data only goes to 2023 right now, 
 and datapoints for certain years are often missing.
 '''
@@ -57,7 +57,7 @@ filtered_data = data[
     & (from_date <= data['date'])
 ]
 
-st.header('Oil losses over time', divider='gray')
+#st.header(divider='gray')
 
 filtered_data = data[
     (data['Subsidiary'].isin(selected_subsidiaries)) &
@@ -91,40 +91,44 @@ fig.add_trace(
             x=daily_wells.index,
             y=daily_wells.values,
             mode="lines",
-            name="Wells WWO",
-            line=dict(color="red", width=1),
+            name="Wells<br>WWO", #<br> It's a jump 
+            line=dict(color="red", width=1.5),
             yaxis="y2",
         )
     )
 
 # Configure the layout
-fig.update_layout(
+fig.update_layout(title=dict(text="Oil losses over time", font=dict(size=40), automargin=True),
     xaxis=dict(title="Date"),
     yaxis=dict(title="Oil losses (bopd)"),
-    yaxis2=dict(title="Wells WWO", overlaying="y", side="right"),
+    yaxis2=dict(title="Wells WWO", overlaying="y", side="right", position=1),
     plot_bgcolor="white",
     legend=dict(
-        orientation="v",
-        yanchor="top",
+        orientation="h",
+        yanchor="bottom",
         y=1,
-        xanchor="left",
-        x=0,
-        entrywidth=5,
-        traceorder="reversed",
-        title_font_family="Times New Roman",
+        xanchor="right",
+        x=1,
+        entrywidth=20,
+        title_font_family="Open Sans",
         font=dict(
-            family="Times New Roman",
-            size=10,
-            color="black"
+            family="Open Sans",
+            size=8,
+            color="black",
+            
          ), 
     )
 )
-fig.update_layout(hovermode="x unified", 
-                  hoverlabel=dict(
-                bgcolor="rgba(0, 0, 0, 0)",
+fig.update_layout(template="simple_white",
+                hovermode="x unified", 
+                hoverlabel=dict(
+                bgcolor="white",
                 font_size=10,
-                font_family="Times New Roman"
+                font_family="Open Sans"
     ) )
-fig.update_layout(autosize=False, width=1200, height=600, margin=dict(l=20, r=20, b=20, t=20))
+fig.update_layout(autosize=False,
+                width=800,
+                height=500,
+                margin=dict(l=20, r=20, b=20, t=20))
 
 st.plotly_chart(fig, use_container_width=True)
