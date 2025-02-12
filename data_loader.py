@@ -9,13 +9,14 @@ def load_data(path:str):
     a maximum age to the cache with the TTL argument: @st.cache_data(ttl='1d')
     """
     data = pd.read_csv(path)
-    data = data[data['Subsidiary'].isin(['BR', 'CD', 'CG', 'CM', 'CO', 'GA', 'GT', 'MX', 'TD', 'TN', 'TR', 'TT', 'UKS', 'UKW' ,'VN'])]
+    data = data[data['Subsidiary'].isin(['BIR', 'CAD', 'CG', 'CMI', 'COQ', 'GAE', 'GUT', 'MIX', 'TOD', 'TIN', 'TOR', 'TOTO', 'KFC', 'WSK' ,'VIN'])]
     return data
 
 def preprocess_data(data): 
-    data['date'] = pd.to_datetime(data['date'])
+    data['date'] = pd.to_datetime(data['date'], format='%d/%m/%Y %H:%M')
 
     full_range = pd.date_range(start=data['date'].min(), end=data['date'].max())
+    data = data.iloc[:, :4] 
     data.columns = ["date", "Subsidiary", "Oil losses (bopd)", "Wells WWO"]
 
     grouped_data = data.groupby(['date', 'Subsidiary'])['Oil losses (bopd)'].sum().unstack()  # Desapilar por Subsidiary
@@ -32,7 +33,7 @@ def preprocess_data(data):
 
     return (full_range, dates, subsidiaries, wells, losses)
 
-df = load_data("./data/Losses and number of wells waiting for workover by subsidiary 16012024.csv")
+df = load_data("data/Libro1.csv")
 full_range, dates, subsidiaries, wells, losses = preprocess_data(df)
 
 

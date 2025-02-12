@@ -11,17 +11,16 @@ st.set_page_config(
 )
 # -----------------------------------------------------------------------------
 # Import the data
-data = load_data("./data/Losses and number of wells waiting for workover by subsidiary 16012024.csv")
-
-data['date'] = pd.to_datetime(data['date'])
-
+data = load_data("data/Libro1.csv")
+data['date'] = pd.to_datetime(data['date'], format='%d/%m/%Y %H:%M')
+data = data.iloc[:, :4] 
 data.columns = ["date", "Subsidiary", "Oil losses (bopd)", "Wells WWO"]
 
 # Map colours
 custom_colors = {
-    "BR": "#00d4cf", "CD": "#444343", "CG":  "#ff6351", "CM":  "#f1c232", "CO":  "#607d8b",
-    "GA": "#9fdee8", "GT":  "#98e76a", "MX":  "#ec8a6e", "TD":  "#a76988", "TN":  "#1e53f7", 
-    "TR": "#53a4b6", "TT":  "#00a19d", "UKS":  "#e4bbbb", "UKW":  "#047774", "VN":  "#fd3bff", 
+    "BIR": "#00d4cf", "CAD": "#444343", "CG":  "#ff6351", "CMI":  "#f1c232", "COQ":  "#607d8b",
+    "GAE": "#9fdee8", "GUT":  "#98e76a", "MIX":  "#ec8a6e", "TOD":  "#a76988", "TIN":  "#1e53f7", 
+    "TOR": "#53a4b6", "TOTO":  "#00a19d", "KFC":  "#e4bbbb", "WSK":  "#047774", "VIN":  "#fd3bff", 
     }
 
 '''
