@@ -2,7 +2,7 @@
 
 A simple Streamlit app showing the Oil losses of different countries in the world.
 
-![assets/Screenshot.png](https://github.com/amcucunuba/charplot/blob/main/assets/Screenshot.png)"
+![https://github.com/amcucunuba/charplot/blob/main/assets/Screenshot.png](https://github.com/amcucunuba/chartplot/blob/main/assets/Screenshot.png)"
 ### How to run it on your own machine
 
 1. Install the requirements
